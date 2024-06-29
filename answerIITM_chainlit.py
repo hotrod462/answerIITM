@@ -100,15 +100,13 @@ async def on_chat_start():
     cl.user_session.set("rag_chain_2", rag_chain_2)
 
 @cl.on_message
-async def on_message(message: cl.Message):
-    runnable = cl.user_session.get("rag_chain_2")  # type: Runnable
+async def main(message: cl.Message):
+    chain = cl.user_session.get("rag_chain_2")
+    cb = cl.AsyncLangchainCallbackHandler(
+        stream_final_answer=True, answer_prefix_tokens=["FINAL", "ANSWER"]
+    )
+    cb.answer_reached = True
+    res = await chain.ainvoke(message.content, callbacks=[cb])
+    answer = res.content
 
-    msg = cl.Message(content="")
-
-    async for chunk in runnable.astream(
-        {"input": message.content},
-        config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
-    ):
-        await msg.stream_token(chunk.content)
-
-    await msg.send()
+    await cl.Message(content=answer).send()
