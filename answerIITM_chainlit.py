@@ -5,6 +5,8 @@ from pathlib import Path
 from langchain_groq import ChatGroq
 
 from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+
 from langchain_pinecone import PineconeVectorStore
 
 from langchain import hub
@@ -25,6 +27,7 @@ load_dotenv()
 PINECONE_API_KEY= os.getenv("PINECONE_API_KEY")
 GROQ_API_KEY= os.getenv("GROQ_API_KEY")
 index_name= os.getenv("index_name")
+HF_API_KEY= os.getenv("HF_API_KEY")
 
 @cl.on_chat_start
 async def on_chat_start():
@@ -46,15 +49,18 @@ async def on_chat_start():
 
     
     
-    embedder= OpenAIEmbeddings(openai_api_base="http://localhost:1234/v1", openai_api_key="lm-studio", model="ChristianAzinn/e5-base-v2-gguf", embedding_ctx_length=1024, deployment="ChristianAzinn/e5-base-v2-gguf",check_embedding_ctx_length=False)
-
+    #local_embeddings= OpenAIEmbeddings(openai_api_base="http://localhost:1234/v1", openai_api_key="lm-studio", model="ChristianAzinn/e5-base-v2-gguf", embedding_ctx_length=1024, deployment="ChristianAzinn/e5-base-v2-gguf",check_embedding_ctx_length=False)
+    hf_embeddings = HuggingFaceInferenceAPIEmbeddings(
+    api_key=HF_API_KEY, model_name="intfloat/e5-large-v2"
+    )
+  
     
     
     ##Fix this when embeddings figured out
     
     # Load the Pinecone vector store
     vectorstore = await cl.make_async(PineconeVectorStore)(
-        index_name=index_name, embedding=embedder, pinecone_api_key=PINECONE_API_KEY
+        index_name=index_name, embedding=hf_embeddings, pinecone_api_key=PINECONE_API_KEY
     )
     print("Connected to pinecone")
     # Create a chain that uses the Pinecone vector store
