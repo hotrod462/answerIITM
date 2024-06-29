@@ -37,7 +37,8 @@ async def on_chat_start():
     chat = ChatGroq(
     temperature=0,
     model="mixtral-8x7b-32768",
-    api_key=GROQ_API_KEY # Optional if not set as an environment variable
+    api_key=GROQ_API_KEY, # Optional if not set as an environment variable,
+    streaming=True
     )
 
 
@@ -96,18 +97,18 @@ async def on_chat_start():
     
 )
 
-    cl.user_session.set("rag_chain_1", rag_chain_1)
+    cl.user_session.set("rag_chain_2", rag_chain_2)
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    runnable = cl.user_session.get("rag_chain_1")  # type: Runnable
+    runnable = cl.user_session.get("rag_chain_2")  # type: Runnable
 
     msg = cl.Message(content="")
 
-    async for chunk in runnable.stream(
+    async for chunk in runnable.astream(
         {"input": message.content},
         config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
     ):
-        await msg.stream_token(chunk)
+        await msg.stream_token(chunk.content)
 
     await msg.send()
