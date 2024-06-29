@@ -1,0 +1,6 @@
+langchain
+flask
+langchain-openai
+langchain-groq
+langchain-pinecone
+pinecone
